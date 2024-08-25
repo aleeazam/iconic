@@ -2,7 +2,7 @@ import random
 
 from PIL import Image, ImageDraw
 
-def square(image, x, y, block, pad, colour):
+def _square(image, x, y, block, pad, colour):
     x = x * block + pad
     y = y * block + pad
 
@@ -27,10 +27,14 @@ def identicon(seed):
     image  = Image.new("RGB", (w, w), "#F0F0F0")
     colour = hsl
 
-    # algorithmcally plot dots on the image like github user icons
-    # random for now
-    for i in range(3):
-            square(image, i, 0, b, p, colour)
+    for i, v in enumerate(seed):
+        yes = ord(v) % 2 != 0
+
+        if yes and i < 10:
+            _square(image, i // 5, i % 5, b, p, colour)        # first column
+            _square(image, 4 - i // 5, i % 5, b, p, colour)    # last column
+        elif yes:
+            _square(image, i // 5, i - 10, b, p, colour)       # middle column
 
     return image
 
