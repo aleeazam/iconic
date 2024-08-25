@@ -1,6 +1,10 @@
 import random
 
 from PIL import Image, ImageDraw
+from hashlib import md5, sha1
+
+md5 = lambda x: md5(x.encode()).hexdigest()
+sha1 = lambda x: sha1(x.encode()).hexdigest()
 
 def _square(image, x, y, block, pad, colour):
     x = x * block + pad
@@ -10,11 +14,9 @@ def _square(image, x, y, block, pad, colour):
     draw.rectangle((x, y, x + block, y + block), fill=colour)
 
 def identicon(seed):
-    if len(seed) != 15:
-            print("Seed needs to be 15 characters!")
-            raise TypeError
-    
     width, pad = 256, 0.1 # icon's width and blank border
+
+    seed = md5(seed)[-15:]
 
     p = int(width * pad)
     b = (width - 2 * p) // 5
