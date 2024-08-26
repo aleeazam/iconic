@@ -1,7 +1,7 @@
 import random
 
 from PIL import Image, ImageDraw
-from hashlib import md5, sha1
+from hashlib import md5
 
 md5 = lambda x: md5(x.encode()).hexdigest()
 
@@ -12,12 +12,29 @@ def _square(image, x, y, block, pad, colour):
     draw = ImageDraw.Draw(image)
     draw.rectangle((x, y, x + block, y + block), fill=colour)
 
-def identicon(seed, width=512, pad=0.1, hasher=md5):
-    if pad < 0:
-        raise ValueError("pad >= 0.0")
-    
+def identicon(seed, width=512, pad=0.1, invert=False, hasher=md5):
+    """
+    Args:
+        seed (str): Seed used to generate the identicon.
+        width (int, optional): The width of the image in pixels.
+        pad (float, optional): Percentage border (of block) around the sprite.
+        invert(bool, optional): Invert the colour of the identicon?
+        hasher(optional): Function used to hash given seed. Leave blank for MD5.
+    Returns:
+        image: PIL.Image
+    ```
+    # Example
+    generate("seed").show()
+    generate("agzg").save("agzg.png")
+    ```
+    """
+
+    if pad <= 0.0 or pad > 0.4:
+        raise ValueError("0.0 <= pad < 0.4 only")
+
     seed = hasher(seed)[-15:]
 
+    # Calculate image width, pixel size and padding.
     p = int(width * pad)
     b = (width - 2 * p) // 5
     w = b * 5 + 2 * p
@@ -29,6 +46,10 @@ def identicon(seed, width=512, pad=0.1, hasher=md5):
     image  = Image.new("RGB", (w, w), "#F0F0F0")
     colour = hsl
 
+    if invert:
+        image  = Image.new("RGB", (w, w), hsl)
+        colour = "#F0F0F0"
+
     filled = []
 
     for i, v in enumerate(seed):
@@ -36,15 +57,15 @@ def identicon(seed, width=512, pad=0.1, hasher=md5):
         filled.append(yes)
 
         if yes and i < 10:
-            _square(image, i // 5, i % 5, b, p, colour)        # 1
-            _square(image, 4 - i // 5, i % 5, b, p, colour)    # 3
+            _square(image, i // 5, i % 5, b, p, colour)
+            _square(image, 4 - i // 5, i % 5, b, p, colour)
         elif yes:
-            _square(image, i // 5, i - 10, b, p, colour)       # 2
+            _square(image, i // 5, i - 10, b, p, colour)
 
+    # Ignore completely filled or blank sprites.
     if all(filled) or not any(filled):
-        return identicon(seed, block, pad, hasher) # ignore boring icons
-                                                   # blotted square or empty ones
-        
+        return generate(seed, block, pad, invert, hasher)
+
     return image
 
 if __name__ == "__main__":
